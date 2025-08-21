@@ -4,477 +4,147 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Passport Photo Sheet Maker</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css" />
   <style>
-    :root{
-      --bg:#0b1020; --panel:#121732; --muted:#8892b0; --accent:#52b788; --accent-2:#4ea8de; --danger:#ef476f;
-    }
+    :root{--bg:#0b1020;--panel:#121732;--muted:#9fb0d0;--accent:#4ade80;--danger:#ef476f}
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0; font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial; background:linear-gradient(180deg,#0b1020 0%, #0e1430 100%); color:#e6edf3}
-    a{color:var(--accent-2)}
-    .container{display:grid; grid-template-columns: 1.2fr 0.9fr; gap:18px; height:100vh; padding:18px}
-    header{grid-column:1/-1; display:flex; align-items:center; justify-content:space-between; margin-bottom:4px}
-    .title{font-weight:700; letter-spacing:0.2px; font-size:20px}
-    .card{background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.35); overflow:hidden; display:flex; flex-direction:column}
-    .card h3{margin:0; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.06); font-size:14px; color:#c9d1d9; letter-spacing:.4px}
-    .card .content{padding:14px 16px; overflow:auto}
-    .toolbar{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-    .btn{appearance:none; border:1px solid rgba(255,255,255,.12); background:#1b2147; color:white; padding:8px 12px; border-radius:12px; cursor:pointer; font-weight:600; font-size:13px}
-    .btn:hover{border-color:#6cace4}
-    .btn[disabled]{opacity:.5; cursor:not-allowed}
-    .btn.primary{background:linear-gradient(135deg,#3fb2ff,#4ade80); border:0; color:#04121b}
-    .btn.danger{background:#ef476f}
-    .grid{display:grid; grid-template-columns: repeat(2, 1fr); gap:10px}
-    label{font-size:12px; color:#b9c1d9}
-    input[type="number"], select, input[type="text"], input[type="color"]{width:100%; padding:8px 10px; background:#0f1433; border:1px solid rgba(255,255,255,.12); border-radius:10px; color:#e6edf3}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:#0b1020; color:#fff; margin:0}
+    header{padding:12px; background:#121732; display:flex; justify-content:space-between; align-items:center; gap:10px}
+    h1{margin:0; font-size:18px}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{background:#1b2147; border:1px solid #3b4482; padding:8px 12px; border-radius:10px; color:#fff; cursor:pointer; font-weight:600; font-size:13px}
+    .btn.primary{background:linear-gradient(135deg,#3fb2ff,#4ade80); color:#04121b; border:0}
+    .btn.danger{background:var(--danger); border:0}
+    .btn[disabled]{opacity:.55; cursor:not-allowed}
+    main{display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; padding:14px; height: calc(100vh - 58px)}
+    #imageHolder{ background:#0f1330; border:1px solid #2a3169; border-radius:12px; display:flex; align-items:center; justify-content:center; min-height:420px}
+    #image{max-width:100%; max-height:78vh; display:block}
+    .card{background:#10163b; border:1px solid #2a3169; border-radius:12px; padding:12px}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0}
+    .grid{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    .label{font-size:12px; color:var(--muted)}
     input[type="range"]{width:100%}
-    .switch{display:flex; align-items:center; gap:6px; font-size:12px; color:#b9c1d9}
-    .switch input{transform:scale(1.1)}
-    #workspace{position:relative; flex:1}
-    #imageHolder{position:relative; height:100%; min-height:440px; display:flex; align-items:center; justify-content:center; background:radial-gradient(ellipse at top, rgba(255,255,255,.03), transparent 40%), #0f1330}
-    #image{max-width:100%; display:block}
-    .badge{padding:4px 8px; border-radius:999px; background:#0d1b2a; border:1px solid rgba(255,255,255,.08); font-size:11px; color:#9fb7ff}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    footer{grid-column:1/-1; text-align:center; font-size:12px; color:var(--muted); padding-top:6px}
-    .hint{font-size:11px; color:#9fb7ff}
-    .divider{height:1px; background:rgba(255,255,255,.07); margin:10px 0}
-    .inline{display:flex; gap:8px; align-items:center}
-    .sr{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+    .val{font-variant-numeric: tabular-nums; color:#bcd1ff; font-weight:700}
   </style>
 </head>
 <body>
   <header>
-    <div class="title">Passport Photo Sheet Maker <span class="badge">client‑side • works on GitHub Pages</span></div>
+    <h1>Passport Photo Sheet Maker</h1>
     <div class="toolbar">
-      <label class="btn">
-        <input id="fileInput" type="file" accept="image/*" class="sr" />
-        Upload Photo
-      </label>
-      <button id="resetBtn" class="btn" disabled>Reset</button>
-      <button id="applyBtn" class="btn">Apply edits</button>
+      <label class="btn"><input id="fileInput" type="file" accept="image/*" style="display:none"/>Upload</label>
+      <button id="startCropBtn" class="btn">Start Crop</button>
+      <button id="applyCropBtn" class="btn">Apply Crop</button>
+      <button id="rotateBtn" class="btn">Rotate 90°</button>
+      <button id="resetBtn" class="btn danger">Reset</button>
       <button id="generateBtn" class="btn primary">Create PDF</button>
     </div>
   </header>
 
-  <div class="container">
-    <section class="card" id="workspace">
-      <h3>Crop & Preview</h3>
-      <div class="content" id="imageHolder">
-        <img id="image" alt="Upload to start" />
-      </div>
+  <main>
+    <section class="card">
+      <div id="imageHolder"><img id="image" alt="Upload to start"/></div>
+      <div class="row" style="justify-content:space-between"><span class="label">Preview with live adjustments</span><span class="label">Crop → Apply Crop removes the old selection and locks the result.</span></div>
     </section>
 
     <aside class="card">
-      <h3>Controls</h3>
-      <div class="content">
-        <div class="row">
-          <label class="btn"><input id="pasteBtn" type="button" class="sr">Paste from clipboard</label>
-          <span class="hint">Tip: Ctrl+V to paste an image</span>
+      <div class="grid">
+        <div>
+          <div class="label">Brightness <span id="bVal" class="val">100%</span></div>
+          <input id="brightness" type="range" min="50" max="150" value="100"/>
         </div>
-        <div class="divider"></div>
-        <div class="grid">
-          <div>
-            <label>Units</label>
-            <select id="units">
-              <option value="mm" selected>Millimeters (mm)</option>
-              <option value="inch">Inches</option>
-            </select>
-          </div>
-          <div>
-            <label>DPI (print)</label>
-            <input id="dpi" type="number" value="300" min="72" max="900" />
-          </div>
+        <div>
+          <div class="label">Contrast <span id="cVal" class="val">100%</span></div>
+          <input id="contrast" type="range" min="50" max="150" value="100"/>
         </div>
-
-        <h4 style="margin:12px 0 6px">Page Size</h4>
-        <div class="grid">
-          <div>
-            <label>Preset</label>
-            <select id="pagePreset">
-              <option value="custom">Custom</option>
-              <option value="4x6">Photo 4×6</option>
-              <option value="5x7">Photo 5×7</option>
-              <option value="A4">A4</option>
-            </select>
-          </div>
-          <div class="inline" style="gap:6px">
-            <div style="flex:1"><label>W</label><input id="pageW" type="number" value="102" step="0.1" /></div>
-            <div style="flex:1"><label>H</label><input id="pageH" type="number" value="152" step="0.1" /></div>
-          </div>
+        <div>
+          <div class="label">Gamma <span id="gVal" class="val">1.00</span></div>
+          <input id="gamma" type="range" min="70" max="180" value="100"/>
         </div>
-
-        <h4 style="margin:12px 0 6px">Image Size</h4>
-        <div class="grid">
-          <div>
-            <label>Preset</label>
-            <select id="sizePreset">
-              <option value="custom">Custom</option>
-              <option value="25x35">Passport 25×35 mm</option>
-              <option value="35x35">Passport 35×35 mm</option>
-              <option value="35x45">Passport 35×45 mm</option>
-              <option value="40x30">Passport 40×30 mm</option>
-              <option value="50x50">US 2×2 in (50×50 mm)</option>
-            </select>
-          </div>
-          <div class="inline" style="gap:6px">
-            <div style="flex:1"><label>W</label><input id="imgW" type="number" value="25" step="0.1" /></div>
-            <div style="flex:1"><label>H</label><input id="imgH" type="number" value="35" step="0.1" /></div>
-          </div>
+        <div>
+          <div class="label">Size preset</div>
+          <select id="sizePreset">
+            <option value="35x45">Passport 35×45 mm</option>
+            <option value="25x35">Passport 25×35 mm</option>
+            <option value="35x35">Passport 35×35 mm</option>
+            <option value="50x50">US 2×2 in (50×50 mm)</option>
+            <option value="custom">Custom</option>
+          </select>
         </div>
-
-        <div class="grid">
-          <div><label>Gap V</label><input id="gapV" type="number" value="3" step="0.1" /></div>
-          <div><label>Gap H</label><input id="gapH" type="number" value="3" step="0.1" /></div>
-          <div><label>Margin</label><input id="margin" type="number" value="4" step="0.1" /></div>
-          <div><label>Max photos (0 = auto)</label><input id="maxCount" type="number" value="0" min="0" step="1" /></div>
+        <div>
+          <div class="label">W (mm)</div>
+          <input id="imgW" type="number" step="0.1" value="35"/>
         </div>
-
-        <div class="row" style="margin-top:8px">
-          <label class="switch"><input id="lockRatio" type="checkbox" checked> Lock crop to size ratio</label>
-          <label class="switch"><input id="autoRotate" type="checkbox" checked> Auto rotate to fit more</label>
-          <label class="switch"><input id="addBorder" type="checkbox"> Border</label>
-          <label class="switch"><input id="cutMarks" type="checkbox" checked> Cutting marks</label>
-        </div>
-
-        <h4 style="margin:12px 0 6px">Adjustments</h4>
-        <div class="grid">
-          <div>
-            <label>Brightness <span id="bVal">100%</span></label>
-            <input id="brightness" type="range" min="50" max="150" value="100" />
-          </div>
-          <div>
-            <label>Contrast <span id="cVal">100%</span></label>
-            <input id="contrast" type="range" min="50" max="150" value="100" />
-          </div>
-          <div>
-            <label>Gamma <span id="gVal">1.00</span></label>
-            <input id="gamma" type="range" min="70" max="180" value="100" />
-          </div>
-          <div>
-            <label>Border color</label>
-            <input id="borderColor" type="color" value="#000000" />
-          </div>
-        </div>
-
-        <h4 style="margin:12px 0 6px">Background (bonus)</h4>
-        <div class="grid">
-          <div>
-            <label>Mode</label>
-            <select id="bgMode">
-              <option value="original">Original</option>
-              <option value="remove">Remove (keep person)</option>
-              <option value="solid">Solid color</option>
-            </select>
-          </div>
-          <div>
-            <label>BG color</label>
-            <input id="bgColor" type="color" value="#ffffff" />
-          </div>
-        </div>
-        <div class="hint" style="margin-top:4px">The "Remove" option runs on‑device using BodyPix (free, no server).</div>
-
-        <div class="divider"></div>
-        <div class="row">
-          <label class="switch"><input id="include4x6" type="checkbox" checked> Include 4×6 page</label>
-          <label class="switch"><input id="include5x7" type="checkbox" checked> Include 5×7 page</label>
+        <div>
+          <div class="label">H (mm)</div>
+          <input id="imgH" type="number" step="0.1" value="45"/>
         </div>
       </div>
+      <div class="row"><span class="label">DPI</span><input id="dpi" type="number" value="300" min="72" max="900" style="width:90px"></div>
+      <div class="row"><label class="label"><input id="cutMarks" type="checkbox" checked/> Cutting marks</label><label class="label"><input id="border" type="checkbox"/> Border</label></div>
+      <div class="row"><label class="label"><input id="inc4x6" type="checkbox" checked/> 4×6 page</label><label class="label"><input id="inc5x7" type="checkbox" checked/> 5×7 page</label></div>
     </aside>
-  </div>
-  <footer>
-    Built for static hosting. All processing happens locally in your browser.
-  </footer>
+  </main>
 
-  <!-- Libraries -->
   <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
   <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.2.0/dist/body-pix.min.js"></script>
-
   <script>
-    // ------- Helpers -------
-    const $ = (id) => document.getElementById(id);
-    const mmPerInch = 25.4;
-    let cropper = null;
-    let currentImageURL = null;
-    let bodyPixModel = null; // lazy loaded
+    const mmPerInch=25.4; const $=id=>document.getElementById(id);
+    let cropper=null; const imageEl=$('image');
 
-    const pagePresets = {
-      '4x6': { mm:[102,152] },
-      '5x7': { mm:[127,178] },
-      'A4':  { mm:[210,297] }
-    };
-    const imgPresets = {
-      '25x35':[25,35], '35x35':[35,35], '35x45':[35,45], '40x30':[40,30], '50x50':[50,50]
-    };
+    const presets={"25x35":[25,35],"35x35":[35,35],"35x45":[35,45],"50x50":[50,50]};
 
-    function toMM(val, units){ return units==='inch' ? (val * mmPerInch) : val; }
-    function fmt(n){ return (Math.round(n*100)/100).toString(); }
+    function updateLabels(){ $('bVal').textContent=$('brightness').value+'%'; $('cVal').textContent=$('contrast').value+'%'; $('gVal').textContent=(+$('gamma').value/100).toFixed(2); }
+    function applyPreviewFilters(){ imageEl.style.filter=`brightness(${$('brightness').value}%) contrast(${$('contrast').value}%)`; }
 
-    function setAspectFromSize(){
-      const lock = $('lockRatio').checked;
-      if(!cropper) return;
-      if(!lock){ cropper.setAspectRatio(NaN); return; }
-      const w = parseFloat($('imgW').value||25);
-      const h = parseFloat($('imgH').value||35);
-      if(w>0 && h>0) cropper.setAspectRatio(w/h);
+    function startCrop(){ if(!imageEl.src) return alert('Upload first'); if(cropper) cropper.destroy(); cropper=new Cropper(imageEl,{viewMode:1,autoCropArea:0.92,background:false}); }
+    function applyCrop(){ if(!cropper) return alert('Start crop first'); const c=cropper.getCroppedCanvas(); imageEl.src=c.toDataURL('image/jpeg',0.95); cropper.destroy(); cropper=null; }
+
+    function rotate90(){ if(cropper){ cropper.rotate(90); return; } if(!imageEl.src) return; const tmp=new Image(); tmp.onload=()=>{ const cvs=document.createElement('canvas'); cvs.width=tmp.height; cvs.height=tmp.width; const ctx=cvs.getContext('2d'); ctx.translate(cvs.width/2,cvs.height/2); ctx.rotate(Math.PI/2); ctx.drawImage(tmp,-tmp.width/2,-tmp.height/2); imageEl.src=cvs.toDataURL('image/jpeg',0.95);} ; tmp.src=imageEl.src; }
+
+    function getProcessedCanvas(targetWpx,targetHpx){
+      return new Promise((resolve)=>{
+        const img=new Image(); img.onload=()=>{
+          const cvs=document.createElement('canvas'); cvs.width=targetWpx; cvs.height=targetHpx; const ctx=cvs.getContext('2d');
+          // apply brightness/contrast via canvas filter; gamma later
+          ctx.filter=`brightness(${$('brightness').value}%) contrast(${$('contrast').value}%)`;
+          ctx.drawImage(img,0,0,targetWpx,targetHpx);
+          const gamma=+$('gamma').value/100; if(Math.abs(gamma-1)>0.01){ const id=ctx.getImageData(0,0,cvs.width,cvs.height); const d=id.data; const inv=1/gamma; const lut=new Uint8ClampedArray(256); for(let i=0;i<256;i++){ lut[i]=Math.min(255,Math.round(255*Math.pow(i/255,inv))); } for(let i=0;i<d.length;i+=4){ d[i]=lut[d[i]]; d[i+1]=lut[d[i+1]]; d[i+2]=lut[d[i+2]]; } ctx.putImageData(id,0,0);} resolve(cvs);
+        }; img.src=imageEl.src;
+      });
     }
 
-    function setPagePreset(){
-      const p = $('pagePreset').value;
-      if(p in pagePresets){
-        const [w,h] = pagePresets[p].mm; $('pageW').value=w; $('pageH').value=h;
+    function placeOnPDF(doc,pw,ph,imgWmm,imgHmm){
+      const gap=3, margin=4; const cut=$('cutMarks').checked; const border=$('border').checked;
+      const cols=Math.max(1,Math.floor((pw-2*margin+gap)/(imgWmm+gap))); const rows=Math.max(1,Math.floor((ph-2*margin+gap)/(imgHmm+gap)));
+      const startX=margin, startY=margin;
+      return async (dataURL)=>{
+        let k=0; for(let r=0;r<rows;r++){ for(let c=0;c<cols;c++){ const x=startX+c*(imgWmm+gap); const y=startY+r*(imgHmm+gap); doc.addImage(dataURL,'JPEG',x,y,imgWmm,imgHmm,'','FAST'); if(border){ doc.setDrawColor(0); doc.setLineWidth(0.2); doc.rect(x,y,imgWmm,imgHmm);} if(cut){ doc.setDrawColor(160); doc.setLineWidth(0.15); const m=2.5; doc.line(x-m,y,x,y); doc.line(x,y-m,x,y); doc.line(x+imgWmm,y,x+imgWmm+m,y); doc.line(x+imgWmm,y,x+imgWmm,y-m); doc.line(x-m,y+imgHmm,x,y+imgHmm); doc.line(x,y+imgHmm,x,y+imgHmm+m); doc.line(x+imgWmm,y+imgHmm,x+imgWmm+m,y+imgHmm); doc.line(x+imgWmm,y+imgHmm,x+imgWmm,y+imgHmm+m);} k++; } }
       }
     }
 
-    function setSizePreset(){
-      const p = $('sizePreset').value; if(p in imgPresets){ const [w,h]=imgPresets[p]; $('imgW').value=w; $('imgH').value=h; setAspectFromSize(); }
-    }
+    // Events
+    $('fileInput').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(!f) return; const url=URL.createObjectURL(f); imageEl.src=url; imageEl.onload=()=>{ if(cropper){ cropper.destroy(); cropper=null;} }; });
+    $('startCropBtn').addEventListener('click',startCrop);
+    $('applyCropBtn').addEventListener('click',applyCrop);
+    $('rotateBtn').addEventListener('click',rotate90);
+    $('resetBtn').addEventListener('click',()=>{ if(cropper){ cropper.destroy(); cropper=null;} imageEl.style.filter=''; $('brightness').value=100; $('contrast').value=100; $('gamma').value=100; updateLabels(); });
 
-    function updateFilterLabels(){
-      $('bVal').textContent = $('brightness').value + '%';
-      $('cVal').textContent = $('contrast').value + '%';
-      $('gVal').textContent = (parseInt($('gamma').value)/100).toFixed(2);
-    }
+    ;['brightness','contrast','gamma'].forEach(id=>$(id).addEventListener('input',()=>{updateLabels(); applyPreviewFilters();}));
+    $('sizePreset').addEventListener('change',()=>{ const v=$('sizePreset').value; if(presets[v]){ const [w,h]=presets[v]; $('imgW').value=w; $('imgH').value=h; }});
 
-    function applyPreviewFilters(){
-      if(!$('image')) return;
-      const b = $('brightness').value; const c = $('contrast').value;
-      // For preview we use CSS filters. Gamma is applied at export.
-      $('image').style.filter = `brightness(${b}%) contrast(${c}%)`;
-    }
+    updateLabels();
 
-    function loadImageToCropper(src){
-      const img = $('image');
-      img.src = src;
-      img.onload = () => {
-        if(cropper) { cropper.destroy(); cropper = null; }
-        cropper = new Cropper(img, {
-          viewMode:1, dragMode:'move', autoCropArea:0.9, background:false, movable:true, zoomable:true, rotatable:true,
-          responsive:true,
-        });
-        setAspectFromSize();
-        $('resetBtn').disabled = false;
-      };
-    }
-
-    async function getCroppedCanvasWithEdits(){
-      if(!cropper) throw new Error('Upload and crop first');
-      const data = cropper.getData(true);
-      const imgEl = $('image');
-      // Create canvas of crop size
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(data.width));
-      canvas.height = Math.max(1, Math.round(data.height));
-      const ctx = canvas.getContext('2d');
-
-      // Apply brightness/contrast via ctx.filter
-      const b = parseInt($('brightness').value); const c = parseInt($('contrast').value);
-      ctx.filter = `brightness(${b}%) contrast(${c}%)`;
-      ctx.imageSmoothingEnabled = true;
-
-      // Draw from the source image
-      ctx.drawImage(
-        imgEl,
-        Math.round(data.x), Math.round(data.y), Math.round(data.width), Math.round(data.height),
-        0, 0, canvas.width, canvas.height
-      );
-
-      // Apply gamma correction by pixel processing
-      const gamma = parseInt($('gamma').value) / 100;
-      if(Math.abs(gamma-1.0) > 0.01){
-        const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-        const d = imgData.data; const invGamma = 1/gamma; const lut = new Uint8ClampedArray(256);
-        for(let i=0;i<256;i++){ lut[i] = Math.min(255, Math.round(255*Math.pow(i/255, invGamma))); }
-        for(let i=0;i<d.length;i+=4){ d[i]=lut[d[i]]; d[i+1]=lut[d[i+1]]; d[i+2]=lut[d[i+2]]; }
-        ctx.putImageData(imgData,0,0);
-      }
-
-      // Background modes
-      const mode = $('bgMode').value; const bgColor = $('bgColor').value;
-      if(mode === 'solid'){
-        const out = document.createElement('canvas'); out.width=canvas.width; out.height=canvas.height; const octx = out.getContext('2d');
-        octx.fillStyle = bgColor; octx.fillRect(0,0,out.width,out.height); octx.drawImage(canvas,0,0);
-        return out;
-      }
-
-      if(mode === 'remove'){
-        if(!bodyPixModel){
-          bodyPixModel = await bodyPix.load({architecture:'MobileNetV1', outputStride:16, multiplier:0.75, quantBytes:2});
-        }
-        const seg = await bodyPixModel.segmentPerson(canvas, {internalResolution:'medium'});
-        const out = document.createElement('canvas'); out.width=canvas.width; out.height=canvas.height; const octx=out.getContext('2d');
-        // Fill background with chosen color (white by default)
-        octx.fillStyle = bgColor; octx.fillRect(0,0,out.width,out.height);
-        const imgData = octx.getImageData(0,0,out.width,out.height);
-        // Draw original as source
-        const srcCtx = canvas.getContext('2d'); const srcData = srcCtx.getImageData(0,0,out.width,out.height);
-        for(let i=0;i<seg.data.length;i++){
-          if(seg.data[i]===1){ // person
-            imgData.data[i*4+0] = srcData.data[i*4+0];
-            imgData.data[i*4+1] = srcData.data[i*4+1];
-            imgData.data[i*4+2] = srcData.data[i*4+2];
-            imgData.data[i*4+3] = 255;
-          }
-        }
-        octx.putImageData(imgData,0,0);
-        return out;
-      }
-
-      return canvas; // original
-    }
-
-    function mmToPDFUnits(v){
-      // jsPDF is initialized in mm, so this is identity; kept for clarity
-      return v;
-    }
-
-    function computeGrid(pageW, pageH, imgW, imgH, gapH, gapV, margin, autorotate){
-      function fit(w,h){
-        const cols = Math.max(1, Math.floor((pageW - 2*margin + gapH) / (w + gapH)));
-        const rows = Math.max(1, Math.floor((pageH - 2*margin + gapV) / (h + gapV)));
-        return {cols, rows, count: cols*rows, w, h, rotated:false};
-      }
-      function fitRot(){
-        const cols = Math.max(1, Math.floor((pageW - 2*margin + gapH) / (imgH + gapH)));
-        const rows = Math.max(1, Math.floor((pageH - 2*margin + gapV) / (imgW + gapV)));
-        return {cols, rows, count: cols*rows, w:imgH, h:imgW, rotated:true};
-      }
-      const a = fit(imgW, imgH); const b = autorotate ? fitRot() : {count:-1};
-      return (b.count > a.count) ? b : a;
-    }
-
-    async function generatePDF(){
-      if(!cropper) { alert('Please upload and crop an image first'); return; }
-      const processed = await getCroppedCanvasWithEdits();
-
-      // Build a high‑res bitmap based on the desired DPI so that prints are sharp.
-      const dpi = parseInt($('dpi').value)||300;
-
-      // Prepare jsPDF
-      const { jsPDF } = window.jspdf;
-      let doc = null; let firstPage = true;
-
-      function addPageForPreset(key){
-        const size = pagePresets[key]; if(!size) return;
-        const [pw,ph] = size.mm; // mm
-        if(firstPage){ doc = new jsPDF({orientation: pw>ph?'l':'p', unit:'mm', format:[pw,ph]}); firstPage=false; }
-        else { doc.addPage([pw,ph], pw>ph?'landscape':'portrait'); }
-        placeOnCurrentPage(pw,ph);
-      }
-
-      function placeOnCurrentPage(pw,ph){
-        const units = $('units').value; // we keep all inputs in mm regardless of ui units
-        const imgWmm = parseFloat($('imgW').value||25);
-        const imgHmm = parseFloat($('imgH').value||35);
-        const gapHmm = parseFloat($('gapH').value||3);
-        const gapVmm = parseFloat($('gapV').value||3);
-        const margin = parseFloat($('margin').value||4);
-        const autorotate = $('autoRotate').checked;
-        const border = $('addBorder').checked; const cutMarks = $('cutMarks').checked; const borderColor = $('borderColor').value;
-        const maxCount = parseInt($('maxCount').value||0);
-
-        // compute layout
-        const layout = computeGrid(pw, ph, imgWmm, imgHmm, gapHmm, gapVmm, margin, autorotate);
-
-        // turn the processed canvas into an image sized for the target DPI
-        const targetPxW = Math.max(1, Math.round((layout.rotated?imgHmm:imgWmm) * dpi / mmPerInch));
-        const targetPxH = Math.max(1, Math.round((layout.rotated?imgWmm:imgHmm) * dpi / mmPerInch));
-        const hi = document.createElement('canvas'); hi.width=targetPxW; hi.height=targetPxH; const hictx = hi.getContext('2d');
-        // Draw and rotate if needed
-        if(layout.rotated){
-          hictx.translate(targetPxW/2, targetPxH/2); hictx.rotate(-Math.PI/2); hictx.drawImage(processed, -targetPxH/2, -targetPxW/2, targetPxH, targetPxW);
-        } else {
-          hictx.drawImage(processed, 0,0, targetPxW, targetPxH);
-        }
-        const dataURL = hi.toDataURL('image/jpeg', 0.95);
-
-        // placement loop
-        let placed = 0;
-        const startX = margin;
-        const startY = margin;
-        for(let r=0; r<layout.rows; r++){
-          for(let c=0; c<layout.cols; c++){
-            if(maxCount>0 && placed>=maxCount) break;
-            const x = startX + c*(layout.w + gapHmm);
-            const y = startY + r*(layout.h + gapVmm);
-            doc.addImage(dataURL, 'JPEG', x, y, layout.w, layout.h, '', 'FAST');
-            if(border){
-              doc.setDrawColor(borderColor);
-              doc.setLineWidth(0.2);
-              doc.rect(x, y, layout.w, layout.h);
-            }
-            if(cutMarks){
-              doc.setDrawColor(180);
-              doc.setLineWidth(0.15);
-              const mark = 2.5; // mm
-              // corners
-              doc.line(x-mark, y, x, y);
-              doc.line(x, y-mark, x, y);
-              doc.line(x+layout.w, y, x+layout.w+mark, y);
-              doc.line(x+layout.w, y, x+layout.w, y-mark);
-              doc.line(x-mark, y+layout.h, x, y+layout.h);
-              doc.line(x, y+layout.h, x, y+layout.h+mark);
-              doc.line(x+layout.w, y+layout.h, x+layout.w+mark, y+layout.h);
-              doc.line(x+layout.w, y+layout.h, x+layout.w, y+layout.h+mark);
-            }
-            placed++;
-          }
-        }
-      }
-
-      if($('include4x6').checked) addPageForPreset('4x6');
-      if($('include5x7').checked) addPageForPreset('5x7');
-      if(!doc){ alert('Select at least one page size (4×6 / 5×7)'); return; }
+    document.getElementById('generateBtn').addEventListener('click', async ()=>{
+      if(!imageEl.src) return alert('Upload and crop/apply first');
+      // target px for selected size (based on DPI)
+      const dpi=parseInt($('dpi').value)||300; const wmm=parseFloat($('imgW').value)||35; const hmm=parseFloat($('imgH').value)||45; const wp=Math.round(wmm*dpi/mmPerInch); const hp=Math.round(hmm*dpi/mmPerInch);
+      const processed=await getProcessedCanvas(wp,hp); const dataURL=processed.toDataURL('image/jpeg',0.95);
+      const { jsPDF } = window.jspdf; let doc=null; let first=true; function addPage(pw,ph){ if(first){ doc=new jsPDF({unit:'mm',format:[pw,ph],orientation: pw>ph?'landscape':'portrait'}); first=false;} else { doc.addPage([pw,ph], pw>ph?'landscape':'portrait'); } return placeOnPDF(doc,pw,ph,wmm,hmm); }
+      if($('inc4x6').checked){ const act=await addPage(102,152); await act(dataURL); }
+      if($('inc5x7').checked){ const act=await addPage(127,178); await act(dataURL); }
+      if(!doc){ alert('Select at least one page'); return; }
       doc.save('passport_sheet.pdf');
-    }
-
-    // ------- Event wiring -------
-    $('pagePreset').addEventListener('change', setPagePreset);
-    $('sizePreset').addEventListener('change', setSizePreset);
-    $('lockRatio').addEventListener('change', setAspectFromSize);
-    ['imgW','imgH'].forEach(id=>$(id).addEventListener('input', setAspectFromSize));
-
-    ;['brightness','contrast','gamma'].forEach(id=>{
-      $(id).addEventListener('input', ()=>{ updateFilterLabels(); applyPreviewFilters(); });
     });
-
-    $('fileInput').addEventListener('change', (e)=>{
-      const file = e.target.files?.[0]; if(!file) return;
-      const url = URL.createObjectURL(file);
-      currentImageURL = url;
-      loadImageToCropper(url);
-      applyPreviewFilters();
-    });
-
-    document.addEventListener('paste', (event)=>{
-      const items = event.clipboardData?.items || [];
-      for(const it of items){
-        if(it.type.indexOf('image')>-1){
-          const file = it.getAsFile();
-          const url = URL.createObjectURL(file);
-          currentImageURL = url; loadImageToCropper(url); applyPreviewFilters(); break;
-        }
-      }
-    });
-
-    $('resetBtn').addEventListener('click', ()=>{
-      if(cropper){ cropper.reset(); }
-      $('brightness').value=100; $('contrast').value=100; $('gamma').value=100; updateFilterLabels(); applyPreviewFilters();
-    });
-
-    $('applyBtn').addEventListener('click', async ()=>{
-      try{ await getCroppedCanvasWithEdits(); alert('Edits prepared. Now click Create PDF.'); }catch(err){ alert(err.message); }
-    });
-
-    $('generateBtn').addEventListener('click', ()=>{ generatePDF().catch(err=>alert(err.message)); });
-
-    // initialize labels
-    updateFilterLabels();
   </script>
 </body>
 </html>
